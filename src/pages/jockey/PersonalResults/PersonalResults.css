@@ -1,0 +1,101 @@
+/* PersonalResults page styles */
+
+/* 2-col chart section */
+.res-chart-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* chart */
+.res-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 160px;
+  padding-bottom: 26px;
+  position: relative;
+}
+
+.res-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+  gap: 6px;
+}
+
+.res-chart-val {
+  position: absolute;
+  top: -18px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.res-chart-col:hover .res-chart-val { opacity: 1; }
+
+.res-chart-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+  transition: filter 0.2s;
+  cursor: pointer;
+}
+
+.res-chart-bar--points {
+  background: linear-gradient(180deg, #00d4aa, rgba(0, 212, 170, 0.3));
+}
+
+.res-chart-bar--wins {
+  background: linear-gradient(180deg, #d4af37, rgba(212, 175, 55, 0.3));
+}
+
+.res-chart-col:hover .res-chart-bar { filter: brightness(1.3); }
+
+.res-chart-bar--points + span,
+.res-chart-bar--wins + span {
+  position: absolute;
+  bottom: -22px;
+  font-size: 11px;
+  color: #555;
+}
+
+.res-chart-col span {
+  position: absolute;
+  bottom: -22px;
+  font-size: 11px;
+  color: #555;
+}
+
+/* win rate bar */
+.res-winrate-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.res-winrate-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.res-winrate-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4aa, #4ade80);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+@media (max-width: 900px) {
+  .res-chart-section { grid-template-columns: 1fr; }
+}

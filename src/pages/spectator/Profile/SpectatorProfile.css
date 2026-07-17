@@ -1,0 +1,19 @@
+.spectator-profile-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-info-dl dt {
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+}
+
+.profile-info-dl dd {
+  margin: 0 0 12px 0;
+  color: #fff;
+  font-size: 14px;
+}

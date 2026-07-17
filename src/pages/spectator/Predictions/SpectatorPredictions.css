@@ -1,0 +1,31 @@
+.spectator-predictions {
+  /* Inherits layout styles from admin-common.css */
+}
+
+.pool-item-card:hover {
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  background: rgba(212, 175, 55, 0.02) !important;
+}
+
+.info-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d4af37;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.info-icon-btn:hover {
+  background: #d4af37;
+  color: #000;
+  border-color: #d4af37;
+}

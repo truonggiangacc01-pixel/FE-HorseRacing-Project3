@@ -1,0 +1,153 @@
+/* Invitations page styles */
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.inv-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.inv-card:hover { transform: translateY(-2px); }
+
+.inv-card--pending { border-left: 3px solid #fb923c; }
+.inv-card--accepted { border-left: 3px solid #4ade80; }
+.inv-card--declined { border-left: 3px solid #f87171; opacity: 0.7; }
+
+.inv-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inv-race-id {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #555;
+}
+
+.inv-race-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.inv-tournament {
+  font-size: 12px;
+  color: #666;
+}
+
+.inv-horse-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inv-horse-chip {
+  background: rgba(0, 212, 170, 0.1);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #00d4aa;
+  font-weight: 600;
+}
+
+.inv-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.inv-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inv-meta-item span {
+  font-size: 10px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.inv-meta-item strong {
+  font-size: 12px;
+  color: #ccc;
+  font-weight: 600;
+}
+
+.inv-deadline {
+  font-size: 12px;
+  color: #888;
+  padding: 8px 10px;
+  background: rgba(251, 146, 60, 0.07);
+  border-radius: 8px;
+  border: 1px solid rgba(251, 146, 60, 0.15);
+}
+
+.inv-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* modal horse banner */
+.inv-modal-horse-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(0, 212, 170, 0.08);
+  border: 1px solid rgba(0, 212, 170, 0.18);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.inv-horse-icon { font-size: 28px; }
+
+.inv-horse-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.inv-horse-sub {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.inv-notes {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.inv-notes .jockey-label { display: block; margin-bottom: 6px; }
+
+.inv-notes p {
+  margin: 0;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .inv-grid { grid-template-columns: 1fr; }
+}

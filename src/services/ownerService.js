@@ -43,6 +43,15 @@ export async function updateOwnerHorse(horseId, payload) {
   return res.data
 }
 
+/**
+ * Xóa ngựa.
+ * @param {string|number} horseId
+ */
+export async function deleteOwnerHorse(horseId) {
+  const res = await apiClient.delete(`/owner/horses/${horseId}`)
+  return res.data
+}
+
 // ─────────────────────────────────────────
 // ĐĂNG KÝ THAM GIA ĐUA
 // ─────────────────────────────────────────

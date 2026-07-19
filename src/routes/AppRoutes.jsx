@@ -14,6 +14,7 @@ import HorseForm from '../pages/Horses/HorseForm'
 import Dashboard from '../pages/admin/Dashboard/Dashboard'
 import UserManagement from '../pages/admin/Users/UserManagement'
 import TournamentManagement from '../pages/admin/Tournaments/TournamentManagement'
+import RaceTrackManagement from '../pages/admin/RaceTracks/RaceTrackManagement'
 import RaceManagement from '../pages/admin/Races/RaceManagement'
 import RegistrationApproval from '../pages/admin/Registrations/RegistrationApproval'
 import RefereeAssignment from '../pages/admin/Referees/RefereeAssignment'
@@ -114,6 +115,7 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/users" element={<UserManagement />} />
+        <Route path="/admin/race-tracks" element={<RaceTrackManagement />} />
         <Route path="/admin/tournaments" element={<TournamentManagement />} />
         <Route path="/admin/races" element={<RaceManagement />} />
         <Route path="/admin/horses" element={<HorseManagement />} />

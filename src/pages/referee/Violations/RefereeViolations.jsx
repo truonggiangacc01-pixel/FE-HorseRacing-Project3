@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
-import { violations as initialViolations } from '../../../data/adminMockData'
+import React, { useState, useEffect } from 'react'
 import { StatusBadge } from '../../../utils/adminHelpers'
+import { getAllTournaments, getTournamentSchedule } from '../../../services/tournamentService'
+import { getRaceParticipations, handleRuleViolation } from '../../../services/refereeService'
 import './RefereeViolations.css'
 
 const INFRACTION_TYPES = [
@@ -13,43 +14,108 @@ const INFRACTION_TYPES = [
 ]
 
 export default function RefereeViolations() {
-  const [violations, setViolations] = useState(initialViolations)
+  const [violations, setViolations] = useState([])
+  const [races, setRaces] = useState([])
+  const [participations, setParticipations] = useState([])
+  const [loadingParticipations, setLoadingParticipations] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Form state
   const [selectedRace, setSelectedRace] = useState('')
-  const [entityType, setEntityType] = useState('Jockey')
-  const [entityName, setEntityName] = useState('')
+  const [selectedParticipation, setSelectedParticipation] = useState('')
   const [violationType, setViolationType] = useState('')
   const [severity, setSeverity] = useState('medium')
   const [details, setDetails] = useState('')
 
-  const handleAddViolation = (e) => {
+  useEffect(() => {
+    fetchRaces()
+  }, [])
+
+  const fetchRaces = async () => {
+    try {
+      const tRes = await getAllTournaments()
+      let allSchedules = []
+      const tList = Array.isArray(tRes) ? tRes : (tRes?.data || [])
+      for (const t of tList) {
+        const sRes = await getTournamentSchedule(t.id)
+        if (sRes?.data) {
+          allSchedules = [...allSchedules, ...sRes.data.map(r => ({...r, tournamentName: t.name}))]
+        }
+      }
+      setRaces(allSchedules)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleRaceChange = async (e) => {
+    const raceId = e.target.value
+    setSelectedRace(raceId)
+    setSelectedParticipation('')
+    setParticipations([])
+    if (raceId) {
+      try {
+        setLoadingParticipations(true)
+        const pRes = await getRaceParticipations(raceId)
+        if (pRes.data) {
+          setParticipations(pRes.data)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoadingParticipations(false)
+      }
+    }
+  }
+
+  const handleAddViolation = async (e) => {
     e.preventDefault()
-    if (!selectedRace || !entityName || !violationType) {
-      alert('Vui lòng điền đầy đủ các thông tin bắt buộc!')
+    if (!selectedRace || !violationType) {
+      alert('Vui lòng điền đầy đủ các thông tin bắt buộc (Cuộc đua và Loại vi phạm)!')
       return
     }
 
-    const newViolation = {
-      id: `VIO-${Math.floor(Math.random() * 900) + 100}`,
-      type: violationType,
-      entity: `${entityType}: ${entityName}`,
-      race: selectedRace,
-      date: new Date().toISOString().split('T')[0],
-      status: 'pending',
-      severity: severity,
-      details: details
-    }
+    try {
+      setIsSubmitting(true)
+      const payload = {
+        participationId: selectedParticipation ? parseInt(selectedParticipation) : null,
+        description: `${violationType}: ${details}`,
+        penalty: severity,
+        evidence: 'Ghi nhận trực tiếp từ trọng tài'
+      }
 
-    setViolations([newViolation, ...violations])
-    alert(`⚠️ Đã lập biên bản vi phạm ${newViolation.id} thành công! Nội dung đã chuyển đến Ban trọng tài và BTC.`);
-    
-    // Reset form
-    setSelectedRace('')
-    setEntityName('')
-    setViolationType('')
-    setSeverity('medium')
-    setDetails('')
+      await handleRuleViolation(selectedRace, payload)
+
+      const raceName = races.find(r => r.id.toString() === selectedRace)?.name || selectedRace
+      const partInfo = participations.find(p => p.id.toString() === selectedParticipation)
+      const entityStr = partInfo ? `Ngựa: ${partInfo.horseName} - Nài: ${partInfo.jockeyName}` : 'Chưa xác định'
+
+      const newViolation = {
+        id: `VIO-${Math.floor(Math.random() * 9000) + 1000}`,
+        type: violationType,
+        entity: entityStr,
+        race: raceName,
+        date: new Date().toLocaleString('vi-VN'),
+        status: 'PENDING',
+        severity: severity
+      }
+
+      setViolations([newViolation, ...violations])
+      alert(`⚠️ Đã lập biên bản vi phạm thành công! Nội dung đã chuyển đến Ban trọng tài và BTC.`);
+      
+      // Reset form
+      setSelectedRace('')
+      setSelectedParticipation('')
+      setParticipations([])
+      setViolationType('')
+      setSeverity('medium')
+      setDetails('')
+    } catch (err) {
+      console.error(err)
+      alert('Lỗi nộp biên bản vi phạm: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -76,43 +142,33 @@ export default function RefereeViolations() {
                   className="admin-select"
                   style={{ width: '100%' }}
                   value={selectedRace}
-                  onChange={e => setSelectedRace(e.target.value)}
+                  onChange={handleRaceChange}
+                  disabled={isSubmitting}
                   required
                 >
                   <option value="">-- Chọn cuộc đua --</option>
-                  <option value="Derby Một Dặm">Derby Một Dặm</option>
-                  <option value="Đua nước rút">Đua nước rút</option>
-                  <option value="Sprint Classic">Sprint Classic</option>
-                  <option value="Cúp Nhà Vô Địch">Cúp Nhà Vô Địch</option>
+                  {races.map(r => (
+                    <option key={r.id} value={r.id}>{r.name} ({r.tournamentName}) - {r.status}</option>
+                  ))}
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '10px' }}>
-                <div>
-                  <label className="admin-form-label">Đối tượng vi phạm *</label>
-                  <select 
-                    className="admin-select"
-                    style={{ width: '100%' }}
-                    value={entityType}
-                    onChange={e => setEntityType(e.target.value)}
-                  >
-                    <option value="Jockey">👤 Jockey (Nài)</option>
-                    <option value="Horse">🏇 Ngựa đua</option>
-                    <option value="Stable">🏠 Chủ ngựa (Stable)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="admin-form-label">Tên đối tượng *</label>
-                  <input 
-                    type="text" 
-                    className="admin-input" 
-                    placeholder="Ví dụ: L. Anderson, Aurelius..."
-                    style={{ width: '100%' }}
-                    value={entityName}
-                    onChange={e => setEntityName(e.target.value)}
-                    required
-                  />
-                </div>
+              <div>
+                <label className="admin-form-label">Đối tượng vi phạm {loadingParticipations && '(Đang tải...)'}</label>
+                <select 
+                  className="admin-select"
+                  style={{ width: '100%' }}
+                  value={selectedParticipation}
+                  onChange={e => setSelectedParticipation(e.target.value)}
+                  disabled={!selectedRace || isSubmitting || loadingParticipations}
+                >
+                  <option value="">-- Chọn ngựa/nài vi phạm (Tùy chọn) --</option>
+                  {participations.map(p => (
+                    <option key={p.id} value={p.id}>
+                      Ngựa: {p.horseName || 'N/A'} - Nài: {p.jockeyName || 'N/A'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -122,6 +178,7 @@ export default function RefereeViolations() {
                   style={{ width: '100%' }}
                   value={violationType}
                   onChange={e => setViolationType(e.target.value)}
+                  disabled={isSubmitting}
                   required
                 >
                   <option value="">-- Chọn hành vi vi phạm --</option>
@@ -138,6 +195,7 @@ export default function RefereeViolations() {
                   style={{ width: '100%' }}
                   value={severity}
                   onChange={e => setSeverity(e.target.value)}
+                  disabled={isSubmitting}
                 >
                   <option value="low">Thấp (Cảnh cáo)</option>
                   <option value="medium">Trung bình (Trừ điểm)</option>
@@ -154,12 +212,13 @@ export default function RefereeViolations() {
                   placeholder="Ghi nhận cụ thể thời gian, vị trí trên sân đua, hoặc các quan sát trực tiếp từ trọng tài..."
                   value={details}
                   onChange={e => setDetails(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
-                <button type="submit" className="admin-btn admin-btn--gold" style={{ background: '#f59e0b', borderColor: '#f59e0b', color: '#fff' }}>
-                  Lập Biên Bản & Gửi Báo Cáo
+                <button type="submit" className="admin-btn admin-btn--gold" style={{ background: '#f59e0b', borderColor: '#f59e0b', color: '#fff' }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Đang gửi...' : 'Lập Biên Bản & Gửi Báo Cáo'}
                 </button>
               </div>
 
@@ -171,7 +230,7 @@ export default function RefereeViolations() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="admin-card">
             <div className="admin-card-head">
-              <h3>Nhật Ký Vi Phạm Đã Ghi Nhận</h3>
+              <h3>Nhật Ký Vi Phạm Đã Ghi Nhận (Phiên hiện tại)</h3>
             </div>
             <div className="admin-card-body" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '550px', overflowY: 'auto' }}>
               {violations.map(v => (
@@ -187,7 +246,7 @@ export default function RefereeViolations() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <code style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>#{v.id}</code>
+                      <code style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{v.id}</code>
                       <strong style={{ color: '#fff' }}>{v.type}</strong>
                     </div>
                     <span style={{ 
@@ -212,6 +271,9 @@ export default function RefereeViolations() {
                   </div>
                 </div>
               ))}
+              {violations.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Chưa có vi phạm nào được ghi nhận.</div>
+              )}
             </div>
           </div>
         </div>

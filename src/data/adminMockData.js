@@ -127,6 +127,7 @@ export const monthlyReports = [
 export const adminNavItems = [
   { path: '/admin', label: 'Dashboard', icon: '◈' },
   { path: '/admin/users', label: 'Quản lý User', icon: '◎' },
+  { path: '/admin/race-tracks', label: 'Trường đua', icon: '⛖' },
   { path: '/admin/tournaments', label: 'Giải đấu', icon: '◆' },
   { path: '/admin/races', label: 'Cuộc đua', icon: '▶' },
   { path: '/admin/horses', label: 'Quản lý Ngựa', icon: '♞' },
@@ -147,6 +148,7 @@ export const adminNavItems = [
 export const breadcrumbLabels = {
   '/admin': 'Dashboard',
   '/admin/users': 'Quản lý User',
+  '/admin/race-tracks': 'Quản lý Trường đua',
   '/admin/tournaments': 'Quản lý Giải đấu',
   '/admin/races': 'Quản lý Cuộc đua',
   '/admin/horses': 'Quản lý Ngựa',

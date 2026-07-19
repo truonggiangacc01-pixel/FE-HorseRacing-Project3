@@ -395,7 +395,33 @@ export default function UserManagement() {
                 <dt>Số điện thoại</dt>
                 <dd>{selectedUser.phone || '—'}</dd>
                 <dt>Ngày sinh</dt>
-                <dd>{selectedUser.dob || '—'}</dd>
+                <dd>{selectedUser.birthDate || selectedUser.dob || '—'}</dd>
+                
+                {selectedUser.role === 'HORSE_OWNER' && (
+                  <>
+                    <dt>Địa chỉ</dt>
+                    <dd>{selectedUser.address || '—'}</dd>
+                  </>
+                )}
+
+                {selectedUser.role === 'JOCKEY' && (
+                  <>
+                    <dt>Số năm kinh nghiệm</dt>
+                    <dd>{selectedUser.experienceYears !== undefined && selectedUser.experienceYears !== null ? selectedUser.experienceYears + ' năm' : '—'}</dd>
+                    <dt>Số bằng lái</dt>
+                    <dd>{selectedUser.licenseNumber || '—'}</dd>
+                  </>
+                )}
+
+                {selectedUser.role === 'RACE_REFEREE' && (
+                  <>
+                    <dt>Số năm kinh nghiệm</dt>
+                    <dd>{selectedUser.experienceYears !== undefined && selectedUser.experienceYears !== null ? selectedUser.experienceYears + ' năm' : '—'}</dd>
+                    <dt>Cấp độ chứng chỉ</dt>
+                    <dd>{selectedUser.certificateLevel || '—'}</dd>
+                  </>
+                )}
+
                 <dt>Role</dt>
                 <dd>
                   <select

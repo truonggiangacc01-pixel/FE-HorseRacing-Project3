@@ -26,7 +26,11 @@ export default function HorseManagement() {
         breed: h.breed,
         owner: h.horseOwner?.fullName || h.horseOwner?.userName || 'N/A',
         status: (h.healthStatus === 'ELIGIBLE' || !h.healthStatus) ? 'active' : 'injured', // Simple mock status based on health
-        health: h.healthStatus === 'ELIGIBLE' ? 'Khỏe mạnh' : (h.healthStatus || 'N/A'),
+        healthStatus: h.healthStatus || 'ELIGIBLE',
+        health: h.healthStatus === 'ELIGIBLE' ? 'Khỏe mạnh' : 
+               h.healthStatus === 'SUSPENDED' ? 'Bị đình chỉ' : 
+               h.healthStatus === 'INJURED' ? 'Bị chấn thương' : 
+               h.healthStatus === 'SICK' ? 'Bị ốm' : (h.healthStatus || 'N/A'),
         wins: 0,
         races: 0,
         points: 0,
@@ -71,7 +75,7 @@ export default function HorseManagement() {
   // Modal states
   const [modalOpen, setModalOpen] = useState(false)
   const [editingHorse, setEditingHorse] = useState(null)
-  const [formData, setFormData] = useState({ name: '', age: '', breed: '', owner: '', status: 'active', health: 'Khỏe mạnh', image: '' })
+  const [formData, setFormData] = useState({ name: '', age: '', breed: '', owner: '', healthStatus: 'ELIGIBLE', image: '' })
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
@@ -104,7 +108,7 @@ export default function HorseManagement() {
   // Actions
   const handleOpenAdd = () => {
     setEditingHorse(null)
-    setFormData({ name: '', age: '', breed: '', owner: '', status: 'active', health: 'Khỏe mạnh', image: '' })
+    setFormData({ name: '', age: '', breed: '', owner: '', healthStatus: 'ELIGIBLE', image: '' })
     setModalOpen(true)
   }
 
@@ -115,59 +119,57 @@ export default function HorseManagement() {
       age: horse.age,
       breed: horse.breed,
       owner: horse.owner,
-      status: horse.status,
-      health: horse.health || 'Khỏe mạnh',
+      healthStatus: horse.healthStatus || 'ELIGIBLE',
       image: horse.image || ''
     })
     setModalOpen(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa ngựa đua này không?')) {
-      const updated = horses.filter(h => h.id !== id)
-      saveHorses(updated)
-      if (selectedHorse && selectedHorse.id === id) {
-        setSelectedHorse(null)
+      try {
+        await admin.deleteAdminHorse(id)
+        alert('Xóa ngựa đua thành công!')
+        loadHorses()
+        if (selectedHorse && selectedHorse.id === id) {
+          setSelectedHorse(null)
+        }
+      } catch (err) {
+        alert("Lỗi: " + (err.response?.data?.message || err.response?.data || err.message))
       }
     }
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
     
-    if (editingHorse) {
-      // Edit mode
-      const updated = horses.map(h => 
-        h.id === editingHorse.id 
-          ? { ...h, ...formData, age: parseInt(formData.age) || 0 } 
-          : h
-      )
-      saveHorses(updated)
-      if (selectedHorse && selectedHorse.id === editingHorse.id) {
-        setSelectedHorse({ ...selectedHorse, ...formData, age: parseInt(formData.age) || 0 })
-      }
-    } else {
-      // Add mode
-      const horseImages = [
-        'https://images.unsplash.com/photo-1598974357801-cbca100e65d3?auto=format&fit=crop&w=600&q=80',
-        'https://images.unsplash.com/photo-1551884833-0a24ee98a2ae?auto=format&fit=crop&w=600&q=80',
-        'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
-        'https://images.unsplash.com/photo-1523464862212-d6631d073194?auto=format&fit=crop&w=600&q=80'
-      ]
-      const randomImage = horseImages[Math.floor(Math.random() * horseImages.length)]
-      const newHorse = {
-        id: Date.now(),
-        ...formData,
-        image: formData.image || randomImage,
+    try {
+      const payload = {
+        name: formData.name,
         age: parseInt(formData.age) || 0,
-        wins: 0,
-        races: 0,
-        points: 0
+        breed: formData.breed,
+        healthStatus: formData.healthStatus,
+        horseOwner: formData.owner ? { fullName: formData.owner.trim() } : null
       }
-      saveHorses([newHorse, ...horses])
+
+      if (editingHorse) {
+        // Edit mode
+        await admin.updateAdminHorse(editingHorse.id, payload)
+        alert('Cập nhật ngựa thành công!')
+      } else {
+        // Add mode
+        await admin.createAdminHorse(payload)
+        alert('Thêm ngựa đua thành công!')
+      }
+      
+      setModalOpen(false)
+      loadHorses()
+      if (selectedHorse && editingHorse && selectedHorse.id === editingHorse.id) {
+        setSelectedHorse(null)
+      }
+    } catch (err) {
+      alert("Lỗi: " + (err.response?.data?.message || err.response?.data || err.message))
     }
-    
-    setModalOpen(false)
   }
 
   return (
@@ -177,6 +179,13 @@ export default function HorseManagement() {
           <h1 className="admin-page-title">Quản lý Ngựa đua</h1>
           <p className="admin-page-sub">Quản lý danh sách ngựa đua, thông số chiến tích và trạng thái hoạt động</p>
         </div>
+        <button
+          type="button"
+          className="admin-btn admin-btn--gold"
+          onClick={handleOpenAdd}
+        >
+          + Thêm ngựa mới
+        </button>
       </div>
 
       <div className="admin-filter-bar">
@@ -245,6 +254,20 @@ export default function HorseManagement() {
                             onClick={() => setSelectedHorse(horse)}
                           >
                             Chi tiết
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn--ghost admin-btn--sm"
+                            onClick={() => handleEdit(horse)}
+                          >
+                            Chỉnh sửa
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn--danger admin-btn--sm"
+                            onClick={() => handleDelete(horse.id)}
+                          >
+                            Xóa
                           </button>
                         </div>
                       </td>
@@ -376,11 +399,7 @@ export default function HorseManagement() {
                 )}
               </div>
               
-              <div style={{ marginTop: '24px', display: 'flex', gap: '8px' }}>
-                <p className="text-muted" style={{ fontSize: '13px', fontStyle: 'italic' }}>
-                  * Tính năng Cập nhật/Xóa ngựa hiện chỉ được thực hiện bởi Horse Owner theo thiết kế. Admin chỉ duyệt và tra cứu.
-                </p>
-              </div>
+              
             </div>
           </div>
         )}
@@ -484,30 +503,14 @@ export default function HorseManagement() {
                 <label className="text-muted" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tình trạng Sức khỏe</label>
                 <select
                   className="admin-select"
-                  value={formData.health}
-                  onChange={(e) => setFormData(f => ({ ...f, health: e.target.value }))}
+                  value={formData.healthStatus}
+                  onChange={(e) => setFormData(f => ({ ...f, healthStatus: e.target.value }))}
                   style={{ width: '100%' }}
                 >
-                  <option value="Khỏe mạnh">Khỏe mạnh (Healthy)</option>
-                  <option value="Chấn thương nhẹ">Chấn thương nhẹ (Mild Injury)</option>
-                  <option value="Chấn thương chân">Chấn thương chân (Leg Injury)</option>
-                  <option value="Đang hồi phục">Đang hồi phục (Recovering)</option>
-                  <option value="Căng cơ">Căng cơ (Muscle Strain)</option>
-                  <option value="Bệnh nhẹ">Bệnh nhẹ (Mild Sickness)</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="text-muted" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Trạng thái</label>
-                <select
-                  className="admin-select"
-                  value={formData.status}
-                  onChange={(e) => setFormData(f => ({ ...f, status: e.target.value }))}
-                  style={{ width: '100%' }}
-                >
-                  <option value="active">Hoạt động (Active)</option>
-                  <option value="retired">Giải nghệ (Retired)</option>
-                  <option value="injured">Chấn thương (Injured)</option>
+                  <option value="ELIGIBLE">Khỏe mạnh</option>
+                  <option value="SUSPENDED">Bị đình chỉ</option>
+                  <option value="INJURED">Bị chấn thương</option>
+                  <option value="SICK">Bị ốm</option>
                 </select>
               </div>
 
